@@ -1,0 +1,62 @@
+name: ticketwave
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ticketwave
+      POSTGRES_PASSWORD: ticketwave
+      POSTGRES_DB: ticketwave
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketwave -d ticketwave"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./server
+    environment:
+      DATABASE_URL: postgres://ticketwave:ticketwave@db:5432/ticketwave
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      JWT_EXPIRES_IN: 7d
+      HOLD_TTL_SECONDS: 120
+      PORT: 4000
+      CLIENT_ORIGIN: http://localhost:8080
+      PUBLIC_URL: http://localhost:8080
+      SEED_ON_BOOT: "true"
+      SWEEPER_INTERVAL_MS: 15000
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  web:
+    build:
+      context: ./client
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
