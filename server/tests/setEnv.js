@@ -1,0 +1,9 @@
+process.env.DATABASE_URL = require('./dbUrl');
+process.env.JWT_SECRET = 'test-secret';
+process.env.JWT_EXPIRES_IN = '1h';
+process.env.HOLD_TTL_SECONDS = '120';
+process.env.BCRYPT_ROUNDS = '4';
+process.env.SEED_ON_BOOT = 'false';
+process.env.PUBLIC_URL = 'http://localhost:4000';
+process.env.CLIENT_ORIGIN = 'http://localhost:5173';
+process.env.NODE_ENV = 'test';
